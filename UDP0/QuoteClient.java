@@ -74,56 +74,54 @@ public class QuoteClient {
  
         /* read file */
         ReadFile read = new ReadFile("files/lines.txt", Level.INFO);
-        String[] fileArray = read.fileArray(508);
+        String[] messages = read.fileArray(508);
 
-        /* new rame */
-        byte[] buf = new byte[512];
-        byte[] body;
+        int count = 0;
+        for (String message:messages) {
+            /* new rame */
+            byte[] buf = new byte[512];
+            byte[] body;
 
-        // /* clear frame */
-        // for (int i = 0; i < buf.length; i++) {
-        //     buf[i] = 0;
-        // }
+            /* frame sequence */
+            setSeq(buf, count);
 
-        /* frame sequence */
-        setSeq(buf, 17);
+            /* log sequence number */
+            int x = ByteBuffer.wrap(buf).getInt();
+            logger.log(Level.INFO, String.format("seq input: %d\n", x)); 
+            
+            /* set body */
+            body = (message).getBytes();
+            int j = 4;
+            for (byte b:body) {
+                buf[j] = b;
+                j++;
+            }
+            
+            /* setting parity */
+            // if (false) {
+            //     int parity = countSetBits(buf);
+            //     if (parity%2 == 1) {
+            //         buf[511] = 1;
+            //     }
+            //     logger.log(Level.INFO, String.format("parity: %d\n", parity));
+            // }
 
-        /* log sequence number */
-        int x = ByteBuffer.wrap(buf).getInt();
-        logger.log(Level.INFO, String.format("seq input: %d\n", x)); 
+            /* creating the packet */
+            InetAddress address = InetAddress.getByName(args[0]);
+            DatagramPacket packet = new DatagramPacket(buf, buf.length, address, 4445);
+
+            /* sending the packet */
+            socket.send(packet);
         
-        /* set body */
-        body = ("Hello friend!").getBytes();
-        int j = 4;
-        for (byte b:body) {
-            buf[j] = b;
-            j++;
+            /* get response */
+            packet = new DatagramPacket(buf, buf.length);
+            socket.receive(packet);
+    
+            /* log response */
+            String received = new String(packet.getData(), 0, packet.getLength());
+            logger.log(Level.INFO, "Quote of the Moment: " + received);
+            count++;
         }
-        
-        /* setting parity */
-        // if (false) {
-        //     int parity = countSetBits(buf);
-        //     if (parity%2 == 1) {
-        //         buf[511] = 1;
-        //     }
-        //     logger.log(Level.INFO, String.format("parity: %d\n", parity));
-        // }
-
-        /* creating the packet */
-        InetAddress address = InetAddress.getByName(args[0]);
-        DatagramPacket packet = new DatagramPacket(buf, buf.length, address, 4445);
-
-        /* sending the packet */
-        socket.send(packet);
-     
-        /* get response */
-        packet = new DatagramPacket(buf, buf.length);
-        socket.receive(packet);
- 
-        /* log response */
-        String received = new String(packet.getData(), 0, packet.getLength());
-        logger.log(Level.INFO, "Quote of the Moment: " + received);
-     
         socket.close();
     }
 }

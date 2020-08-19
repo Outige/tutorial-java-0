@@ -84,7 +84,7 @@ public class QuoteServerThread extends Thread {
                 logger.log(Level.INFO, String.format("seq: %d\n", seq));
 
                 /* get message */
-                byte[] bmsg = Arrays.copyOfRange(buf, 4, 508);
+                byte[] bmsg = Arrays.copyOfRange(buf, 4, 512);
                 String msg = new String(bmsg);
                 /* log message */
                 logger.log(Level.INFO, String.format("msg: %s\n", msg));
