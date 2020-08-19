@@ -32,7 +32,13 @@
 import java.io.*;
 import java.net.*;
 import java.util.*;
+import java.util.logging.Level;
 import java.nio.ByteBuffer;
+
+import java.util.logging.Level; 
+import java.util.logging.Logger;
+
+/* globals */
  
 public class QuoteServerThread extends Thread {
  
@@ -54,8 +60,11 @@ public class QuoteServerThread extends Thread {
             System.err.println("Could not open quote file. Serving time instead.");
         }
     }
+
+    public Logger logger = Logger.getLogger(QuoteServerThread.class.getName());
  
     public void run() {
+        logger.setLevel(Level.INFO);
  
         while (moreQuotes) {
             try {
@@ -71,21 +80,21 @@ public class QuoteServerThread extends Thread {
                 /* get sequence number */
                 byte[] bseq = Arrays.copyOfRange(buf, 0, 4);
                 int seq = ByteBuffer.wrap(bseq).getInt();
-                System.out.printf("seq: %d\n", seq);
+                /* log sequence number */
+                logger.log(Level.INFO, String.format("seq: %d\n", seq));
 
                 /* get message */
                 byte[] bmsg = Arrays.copyOfRange(buf, 4, 508);
                 String msg = new String(bmsg);
-                System.out.printf("msg: %s\n", msg);
-
-                /* get parity */
-                byte[] bparity = Arrays.copyOfRange(buf, 508, 512);
-                int parity = ByteBuffer.wrap(bseq).getInt();
-                System.out.printf("parity: %d\n", parity);
-
-                // System.out.println(new String(packet.getData()));
+                /* log message */
+                logger.log(Level.INFO, String.format("msg: %s\n", msg));
  
-                // figure out response
+                /* get parity */
+                // byte[] bparity = Arrays.copyOfRange(buf, 508, 512);
+                // int parity = ByteBuffer.wrap(bseq).getInt();
+                // System.out.printf("parity: %d\n", parity);
+
+                /* figure out response */
                 String dString = null;
                 if (in == null)
                     dString = new Date().toString();
@@ -94,7 +103,7 @@ public class QuoteServerThread extends Thread {
  
                 buf = dString.getBytes();
  
-                // send the response to the client at "address" and "port"
+                /* send the response to the client at "address" and "port" */
                 InetAddress address = packet.getAddress();
                 int port = packet.getPort();
                 packet = new DatagramPacket(buf, buf.length, address, port);

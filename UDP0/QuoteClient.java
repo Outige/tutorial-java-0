@@ -63,7 +63,7 @@ public class QuoteClient {
 
     public static void main(String[] args) throws IOException {
         logger.setLevel(Level.INFO);
- 
+
         if (args.length != 1) {
              System.out.println("Usage: java QuoteClient <hostname>");
              return;
@@ -72,14 +72,18 @@ public class QuoteClient {
         /* get a datagram socket */
         DatagramSocket socket = new DatagramSocket();
  
+        /* read file */
+        ReadFile read = new ReadFile("files/lines.txt", Level.INFO);
+        String[] fileArray = read.fileArray(508);
+
         /* new rame */
         byte[] buf = new byte[512];
         byte[] body;
 
-        /* clear frame */
-        for (int i = 0; i < buf.length; i++) {
-            buf[i] = 0;
-        }
+        // /* clear frame */
+        // for (int i = 0; i < buf.length; i++) {
+        //     buf[i] = 0;
+        // }
 
         /* frame sequence */
         setSeq(buf, 17);
@@ -116,9 +120,9 @@ public class QuoteClient {
         packet = new DatagramPacket(buf, buf.length);
         socket.receive(packet);
  
-        /* display response */
+        /* log response */
         String received = new String(packet.getData(), 0, packet.getLength());
-        System.out.println("Quote of the Moment: " + received);
+        logger.log(Level.INFO, "Quote of the Moment: " + received);
      
         socket.close();
     }
