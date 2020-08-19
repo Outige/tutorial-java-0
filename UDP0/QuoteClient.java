@@ -34,6 +34,9 @@ import java.net.*;
 import java.util.*;
 import java.nio.ByteBuffer;
 
+import java.util.logging.Level; 
+import java.util.logging.Logger;
+
 public class QuoteClient {
 
     static int countSetBits(byte[] arr) {
@@ -45,51 +48,75 @@ public class QuoteClient {
             count += Integer.bitCount(x);
         }
         return count;
-    } 
+    }
+
+    public static void setSeq(byte[] arr, int seq) {
+        byte[] b = ByteBuffer.allocate(4).putInt(seq).array();
+        arr[0] = b[0];
+        arr[1] = b[1];
+        arr[2] = b[2];
+        arr[3] = b[3];
+    }
+
+    /* globals */
+    public static Logger logger = Logger.getLogger(QuoteClient.class.getName());
+
     public static void main(String[] args) throws IOException {
+        logger.setLevel(Level.INFO);
  
         if (args.length != 1) {
              System.out.println("Usage: java QuoteClient <hostname>");
              return;
         }
  
-            // get a datagram socket
+        /* get a datagram socket */
         DatagramSocket socket = new DatagramSocket();
  
-            // send request
+        /* new rame */
         byte[] buf = new byte[512];
         byte[] body;
 
-        /* frame sequence */
+        /* clear frame */
         for (int i = 0; i < buf.length; i++) {
             buf[i] = 0;
         }
-        buf[0] = 0; //! my bs
-        buf[1] = 0; //! my bs
-        buf[2] = 0; //! my bs
-        buf[3] = 1; //! my bs
-        int i = ByteBuffer.wrap(buf).getInt();
-        System.out.println("i: " + i);
-        body = ("Hello friend!").getBytes(); //! my bs
+
+        /* frame sequence */
+        setSeq(buf, 17);
+
+        /* log sequence number */
+        int x = ByteBuffer.wrap(buf).getInt();
+        logger.log(Level.INFO, String.format("seq input: %d\n", x)); 
+        
+        /* set body */
+        body = ("Hello friend!").getBytes();
         int j = 4;
         for (byte b:body) {
             buf[j] = b;
             j++;
         }
-        int parity = countSetBits(buf);
-        if (parity%2 == 1) {
-            buf[511] = 1;
-        }
-        System.out.printf("parity: %d\n", parity);
+        
+        /* setting parity */
+        // if (false) {
+        //     int parity = countSetBits(buf);
+        //     if (parity%2 == 1) {
+        //         buf[511] = 1;
+        //     }
+        //     logger.log(Level.INFO, String.format("parity: %d\n", parity));
+        // }
+
+        /* creating the packet */
         InetAddress address = InetAddress.getByName(args[0]);
         DatagramPacket packet = new DatagramPacket(buf, buf.length, address, 4445);
+
+        /* sending the packet */
         socket.send(packet);
      
-        // get response
+        /* get response */
         packet = new DatagramPacket(buf, buf.length);
         socket.receive(packet);
  
-        // display response
+        /* display response */
         String received = new String(packet.getData(), 0, packet.getLength());
         System.out.println("Quote of the Moment: " + received);
      
